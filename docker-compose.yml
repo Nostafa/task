@@ -1,0 +1,65 @@
+services:
+  server:
+    build:
+      dockerfile: Dockerfile
+      context: .
+      target: development
+    container_name: server
+    volumes:
+      - /usr/src/app/node_modules
+      - .:/usr/src/app
+    env_file:
+      - .env
+    command: yarn run start:dev
+    ports:
+      - 3002:3002
+    restart: unless-stopped
+    networks:
+      - nest_app
+    depends_on:
+      - postgres
+      # - redis
+      # - redis-commander
+
+  postgres:
+    image: postgres
+    restart: always
+    container_name: postgres
+    env_file: .env
+    ports:
+      - '5432:5432'
+    volumes:
+      - db:/var/lib/postgresql/data
+    networks:
+      - nest_app
+
+  # redis:
+  #   image: redis:latest
+  #   container_name: redis-task
+  #   command: redis-server
+  #   volumes:
+  #     - redis:/var/lib/redis
+  #     - redis_config:/usr/local/etc/redis/redis.conf
+  #   ports:
+  #     - 6379:6379
+  #   networks:
+  #     - nest_app
+
+  # redis-commander:
+  #   image: rediscommander/redis-commander:latest
+  #   environment:
+  #     - REDIS_HOSTS=local:redis:6379
+  #     - HTTP_USER=root
+  #     - HTTP_PASSWORD=qwerty
+  #   container_name: redis-commander-task
+  #   ports:
+  #     - 8081:8081
+  #   depends_on:
+  #     - redis
+  #   networks:
+  #     - nest_app
+
+volumes:
+  db:
+networks:
+  nest_app: {}

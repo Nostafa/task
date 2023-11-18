@@ -1,0 +1,72 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+
+model User {
+  id                    String            @id@default(uuid())
+  fullName              String
+  phoneNumber           String            @unique
+  email                 String            @unique
+  balance               Int               @default(0)
+  password              String
+  currency              Currency          @default(EGP)
+  createdAt             DateTime          @default(now()) 
+  refreshToken          String?           @db.VarChar(500)  @map("refresh_token")
+  sentTransactions      Transaction[]     @relation("tranSender")
+  receivedTransactions  Transaction[]     @relation("tranReceiver")
+  tranBnakWithdraw      TranBnakWithdraw[]
+}
+
+model Transaction {
+  id              String            @id@default(uuid())
+  transactionId   Int?
+  amount          Int
+  paymentType     String            @map("payment_type")
+  success         Boolean
+  currency        Currency          @default(EGP)
+  status          TransactionStatus
+  type            TransactionType
+  senderId        String?
+  receiverId      String?
+  sender          User?             @relation("tranSender", fields: [senderId], references: [id])
+  receiver        User?             @relation("tranReceiver", fields: [receiverId], references: [id])
+  createdAt       DateTime          @default(now()) 
+}
+
+model TranBnakWithdraw {
+  id                      String            @unique @default(uuid())
+  fullName                String          
+  bankName                String
+  accountNumber           String
+  amount                  Int
+  swiftCode               String
+  IBAN                    String
+  createdAt               DateTime          @default(now()) @map("created_at")
+  userId                  String                            
+  user                    User              @relation(fields: [userId], references: [id])
+}
+
+enum TransactionType {
+  DEPOSIT
+  WITHDRAWAL
+  TRANSFER
+}
+
+enum TransactionStatus {
+  Completed     //*The payment has been successfully processed and received by the merchant.
+  Failed       //*The payment process was not successful.
+}
+
+enum Currency {
+  EGP
+}
